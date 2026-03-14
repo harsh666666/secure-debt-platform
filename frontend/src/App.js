@@ -3,7 +3,7 @@ import "./App.css";
 
 function App() {
 
-  const backendURL = "http://localhost:5000";
+ const backendURL = "https://secure-debt-platform.onrender.com";
 
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
