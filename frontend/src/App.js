@@ -16,9 +16,10 @@ function App() {
   const [contractData, setContractData] = useState("");
   const [signature, setSignature] = useState("");
   const [publicKey, setPublicKey] = useState("");
+  const [privateKey, setPrivateKey] = useState("");
   const [verificationResult, setVerificationResult] = useState("");
 
-  // Create request
+  // Create Request
   const createRequest = async () => {
 
     const request = {
@@ -40,7 +41,7 @@ function App() {
     alert(data.message);
   };
 
-  // Load blockchain
+  // Load Blockchain
   const loadBlockchain = async () => {
 
     const res = await fetch(`${backendURL}/api/blockchain`);
@@ -50,7 +51,7 @@ function App() {
 
   };
 
-  // Verify blockchain integrity
+  // Verify Blockchain
   const verifyChain = async () => {
 
     const res = await fetch(`${backendURL}/api/verify-chain`);
@@ -64,7 +65,62 @@ function App() {
 
   };
 
-  // Verify contract signature
+  // Tamper Blockchain
+  const tamperBlockchain = () => {
+
+    if (blocks.length > 1) {
+
+      const tampered = [...blocks];
+      tampered[1].data = "HACKED DATA";
+
+      setBlocks(tampered);
+
+      alert("Block tampered! Now check blockchain integrity.");
+
+    } else {
+
+      alert("Need at least 2 blocks.");
+
+    }
+
+  };
+
+  // Generate Keys
+  const generateKeys = async () => {
+
+    const res = await fetch(`${backendURL}/api/generate-keys`);
+    const data = await res.json();
+
+    setPublicKey(data.publicKey);
+    setPrivateKey(data.privateKey);
+
+    alert("Keys generated successfully");
+
+  };
+
+  // Sign Contract
+  const signContract = async () => {
+
+    const res = await fetch(`${backendURL}/api/sign-contract`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        contractData,
+        privateKey
+      })
+    });
+
+    const data = await res.json();
+
+    setSignature(data.signature);
+
+    alert("Contract signed and stored in blockchain");
+
+  };
+
+  // Verify Signature
   const verifyContract = async () => {
 
     const res = await fetch(`${backendURL}/api/verify-contract`, {
@@ -89,26 +145,6 @@ function App() {
 
   };
 
-  // Tamper blockchain (demo)
-  const tamperBlockchain = () => {
-
-    if (blocks.length > 1) {
-
-      const tampered = [...blocks];
-      tampered[1].data = "HACKED DATA";
-
-      setBlocks(tampered);
-
-      alert("Block tampered! Now check blockchain integrity.");
-
-    } else {
-
-      alert("Need at least 2 blocks to tamper.");
-
-    }
-
-  };
-
   return (
     <div className="App">
 
@@ -116,53 +152,32 @@ function App() {
 
       <h2>Create Debt Request</h2>
 
-      <input
-        placeholder="From"
-        value={from}
-        onChange={(e) => setFrom(e.target.value)}
-      />
-
-      <input
-        placeholder="To"
-        value={to}
-        onChange={(e) => setTo(e.target.value)}
-      />
-
-      <input
-        placeholder="Amount"
-        value={amount}
-        onChange={(e) => setAmount(e.target.value)}
-      />
-
-      <input
-        placeholder="Message"
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-      />
+      <input placeholder="From" value={from} onChange={(e) => setFrom(e.target.value)} />
+      <input placeholder="To" value={to} onChange={(e) => setTo(e.target.value)} />
+      <input placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
+      <input placeholder="Message" value={message} onChange={(e) => setMessage(e.target.value)} />
 
       <br /><br />
 
-      <button onClick={createRequest}>
-        Create Request
-      </button>
-
-      <button onClick={loadBlockchain}>
-        View Blockchain
-      </button>
-
-      <button onClick={verifyChain}>
-        Check Blockchain Integrity
-      </button>
-
-      <button onClick={tamperBlockchain}>
-        Tamper Blockchain
-      </button>
+      <button onClick={createRequest}>Create Request</button>
+      <button onClick={loadBlockchain}>View Blockchain</button>
+      <button onClick={verifyChain}>Check Blockchain Integrity</button>
+      <button onClick={tamperBlockchain}>Tamper Blockchain</button>
 
       <p>{chainStatus}</p>
 
       <hr />
 
-      <h2>Verify Contract Signature</h2>
+      <h2>Key Generation</h2>
+
+      <button onClick={generateKeys}>Generate RSA Keys</button>
+
+      <textarea placeholder="Public Key" value={publicKey} readOnly />
+      <textarea placeholder="Private Key" value={privateKey} readOnly />
+
+      <hr />
+
+      <h2>Sign Contract</h2>
 
       <textarea
         placeholder="Contract Data"
@@ -170,23 +185,19 @@ function App() {
         onChange={(e) => setContractData(e.target.value)}
       />
 
+      <button onClick={signContract}>Sign Contract</button>
+
       <textarea
         placeholder="Signature"
         value={signature}
-        onChange={(e) => setSignature(e.target.value)}
+        readOnly
       />
 
-      <textarea
-        placeholder="Public Key"
-        value={publicKey}
-        onChange={(e) => setPublicKey(e.target.value)}
-      />
+      <hr />
 
-      <br /><br />
+      <h2>Verify Contract Signature</h2>
 
-      <button onClick={verifyContract}>
-        Verify Signature
-      </button>
+      <button onClick={verifyContract}>Verify Signature</button>
 
       <p>{verificationResult}</p>
 
@@ -201,9 +212,7 @@ function App() {
           <h3>Block #{index}</h3>
 
           <p><b>Data:</b> {JSON.stringify(block.data)}</p>
-
           <p><b>Previous Hash:</b> {block.previousHash}</p>
-
           <p><b>Hash:</b> {block.hash}</p>
 
         </div>
@@ -212,7 +221,6 @@ function App() {
 
     </div>
   );
-
 }
 
 export default App;
