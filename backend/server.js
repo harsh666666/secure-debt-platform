@@ -8,7 +8,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 // Blockchain instance
 const debtChain = new Blockchain();
@@ -48,7 +48,7 @@ app.get("/api/requests", (req, res) => {
     res.json(requests);
 });
 
-// Sign contract
+// Sign contract and store in blockchain
 app.post("/api/sign-contract", (req, res) => {
 
     const { contractData, privateKey } = req.body;
@@ -57,7 +57,7 @@ app.post("/api/sign-contract", (req, res) => {
 
         const signature = signData(contractData, privateKey);
 
-        // Store signed contract in blockchain
+        // Add block
         debtChain.addBlock({
             contractData,
             signature
@@ -105,11 +105,9 @@ app.post("/api/verify-contract", (req, res) => {
 
 });
 
-// Get full blockchain
+// Get blockchain
 app.get("/api/blockchain", (req, res) => {
-
     res.json(debtChain.chain);
-
 });
 
 // Verify blockchain integrity
@@ -121,7 +119,19 @@ app.get("/api/verify-chain", (req, res) => {
 
 });
 
-// Start server
+// 🚨 Tamper attack demo
+app.get("/api/tamper", (req, res) => {
+
+    if (debtChain.chain.length > 1) {
+        debtChain.chain[1].data = "HACKED CONTRACT DATA";
+    }
+
+    res.json({
+        message: "Blockchain tampered! Now check integrity."
+    });
+
+});
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

@@ -1,226 +1,155 @@
 import React, { useState } from "react";
+import axios from "axios";
 import "./App.css";
 
-function App() {
+const backendURL = "https://secure-debt-platform.onrender.com";
 
- const backendURL = "https://secure-debt-platform.onrender.com";
+function App() {
 
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
 
-  const [blocks, setBlocks] = useState([]);
-  const [chainStatus, setChainStatus] = useState("");
-
   const [contractData, setContractData] = useState("");
+  const [privateKey, setPrivateKey] = useState("");
   const [signature, setSignature] = useState("");
   const [publicKey, setPublicKey] = useState("");
-  const [privateKey, setPrivateKey] = useState("");
-  const [verificationResult, setVerificationResult] = useState("");
 
-  // Create Request
+  const [blockchain, setBlockchain] = useState([]);
+
+  // Create debt request
   const createRequest = async () => {
 
-    const request = {
+    const res = await axios.post(`${backendURL}/api/request`, {
       from,
       to,
       amount,
       message
-    };
-
-    const res = await fetch(`${backendURL}/api/request`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(request)
     });
 
-    const data = await res.json();
-    alert(data.message);
+    alert(res.data.message);
   };
 
-  // Load Blockchain
-  const loadBlockchain = async () => {
-
-    const res = await fetch(`${backendURL}/api/blockchain`);
-    const data = await res.json();
-
-    setBlocks(data);
-
-  };
-
-  // Verify Blockchain
-  const verifyChain = async () => {
-
-    const res = await fetch(`${backendURL}/api/verify-chain`);
-    const data = await res.json();
-
-    if (data.valid) {
-      setChainStatus("✅ Blockchain Valid");
-    } else {
-      setChainStatus("❌ Blockchain Tampered");
-    }
-
-  };
-
-  // Tamper Blockchain
-  const tamperBlockchain = () => {
-
-    if (blocks.length > 1) {
-
-      const tampered = [...blocks];
-      tampered[1].data = "HACKED DATA";
-
-      setBlocks(tampered);
-
-      alert("Block tampered! Now check blockchain integrity.");
-
-    } else {
-
-      alert("Need at least 2 blocks.");
-
-    }
-
-  };
-
-  // Generate Keys
-  const generateKeys = async () => {
-
-    const res = await fetch(`${backendURL}/api/generate-keys`);
-    const data = await res.json();
-
-    setPublicKey(data.publicKey);
-    setPrivateKey(data.privateKey);
-
-    alert("Keys generated successfully");
-
-  };
-
-  // Sign Contract
+  // Sign contract
   const signContract = async () => {
 
-    const res = await fetch(`${backendURL}/api/sign-contract`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        contractData,
-        privateKey
-      })
+    const res = await axios.post(`${backendURL}/api/sign-contract`, {
+      contractData,
+      privateKey
     });
 
-    const data = await res.json();
+    setSignature(res.data.signature);
 
-    setSignature(data.signature);
-
-    alert("Contract signed and stored in blockchain");
-
+    alert("Contract signed and added to blockchain");
   };
 
-  // Verify Signature
-  const verifyContract = async () => {
+  // Verify signature
+  const verifySignature = async () => {
 
-    const res = await fetch(`${backendURL}/api/verify-contract`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        contractData,
-        signature,
-        publicKey
-      })
+    const res = await axios.post(`${backendURL}/api/verify-contract`, {
+      contractData,
+      signature,
+      publicKey
     });
 
-    const data = await res.json();
+    alert("Signature valid: " + res.data.valid);
+  };
 
-    if (data.valid) {
-      setVerificationResult("✅ Signature Valid");
-    } else {
-      setVerificationResult("❌ Signature Invalid");
-    }
+  // Get blockchain
+  const viewBlockchain = async () => {
 
+    const res = await axios.get(`${backendURL}/api/blockchain`);
+
+    setBlockchain(res.data);
+  };
+
+  // Verify blockchain
+  const verifyChain = async () => {
+
+    const res = await axios.get(`${backendURL}/api/verify-chain`);
+
+    alert("Blockchain valid: " + res.data.valid);
+  };
+
+  // 🚨 Tamper demo
+  const tamperBlockchain = async () => {
+
+    const res = await axios.get(`${backendURL}/api/tamper`);
+
+    alert(res.data.message);
   };
 
   return (
+
     <div className="App">
 
       <h1>Secure Debt Repayment Platform</h1>
 
       <h2>Create Debt Request</h2>
 
-      <input placeholder="From" value={from} onChange={(e) => setFrom(e.target.value)} />
-      <input placeholder="To" value={to} onChange={(e) => setTo(e.target.value)} />
-      <input placeholder="Amount" value={amount} onChange={(e) => setAmount(e.target.value)} />
-      <input placeholder="Message" value={message} onChange={(e) => setMessage(e.target.value)} />
-
-      <br /><br />
+      <input placeholder="From" onChange={e => setFrom(e.target.value)} />
+      <input placeholder="To" onChange={e => setTo(e.target.value)} />
+      <input placeholder="Amount" onChange={e => setAmount(e.target.value)} />
+      <input placeholder="Message" onChange={e => setMessage(e.target.value)} />
 
       <button onClick={createRequest}>Create Request</button>
-      <button onClick={loadBlockchain}>View Blockchain</button>
-      <button onClick={verifyChain}>Check Blockchain Integrity</button>
-      <button onClick={tamperBlockchain}>Tamper Blockchain</button>
-
-      <p>{chainStatus}</p>
-
-      <hr />
-
-      <h2>Key Generation</h2>
-
-      <button onClick={generateKeys}>Generate RSA Keys</button>
-
-      <textarea placeholder="Public Key" value={publicKey} readOnly />
-      <textarea placeholder="Private Key" value={privateKey} readOnly />
-
-      <hr />
 
       <h2>Sign Contract</h2>
 
-      <textarea
+      <input
         placeholder="Contract Data"
-        value={contractData}
-        onChange={(e) => setContractData(e.target.value)}
+        onChange={e => setContractData(e.target.value)}
+      />
+
+      <textarea
+        placeholder="Private Key"
+        onChange={e => setPrivateKey(e.target.value)}
       />
 
       <button onClick={signContract}>Sign Contract</button>
 
+      <h2>Verify Contract Signature</h2>
+
+      <textarea
+        placeholder="Public Key"
+        onChange={e => setPublicKey(e.target.value)}
+      />
+
       <textarea
         placeholder="Signature"
         value={signature}
-        readOnly
+        onChange={e => setSignature(e.target.value)}
       />
 
-      <hr />
+      <button onClick={verifySignature}>Verify Signature</button>
 
-      <h2>Verify Contract Signature</h2>
+      <h2>Blockchain Controls</h2>
 
-      <button onClick={verifyContract}>Verify Signature</button>
-
-      <p>{verificationResult}</p>
-
-      <hr />
+      <button onClick={viewBlockchain}>View Blockchain</button>
+      <button onClick={verifyChain}>Check Blockchain Integrity</button>
+      <button onClick={tamperBlockchain}>Tamper Blockchain (Attack Demo)</button>
 
       <h2>Blockchain Explorer</h2>
 
-      {blocks.map((block, index) => (
+      {blockchain.map((block, index) => (
 
         <div key={index} className="block">
 
-          <h3>Block #{index}</h3>
-
+          <p><b>Index:</b> {block.index}</p>
+          <p><b>Timestamp:</b> {block.timestamp}</p>
           <p><b>Data:</b> {JSON.stringify(block.data)}</p>
-          <p><b>Previous Hash:</b> {block.previousHash}</p>
           <p><b>Hash:</b> {block.hash}</p>
+          <p><b>Previous Hash:</b> {block.previousHash}</p>
 
         </div>
 
       ))}
 
     </div>
+
   );
+
 }
 
 export default App;
