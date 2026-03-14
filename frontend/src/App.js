@@ -1,7 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import "./App.css";
 
 function App() {
+
+  const backendURL = "http://localhost:5000";
 
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -14,12 +16,9 @@ function App() {
   const [contractData, setContractData] = useState("");
   const [signature, setSignature] = useState("");
   const [publicKey, setPublicKey] = useState("");
-
   const [verificationResult, setVerificationResult] = useState("");
 
-  const backendURL = "http://localhost:5000";
-
-  // Create Request
+  // Create request
   const createRequest = async () => {
 
     const request = {
@@ -41,7 +40,7 @@ function App() {
     alert(data.message);
   };
 
-  // Load Blockchain
+  // Load blockchain
   const loadBlockchain = async () => {
 
     const res = await fetch(`${backendURL}/api/blockchain`);
@@ -51,7 +50,7 @@ function App() {
 
   };
 
-  // Verify Blockchain
+  // Verify blockchain integrity
   const verifyChain = async () => {
 
     const res = await fetch(`${backendURL}/api/verify-chain`);
@@ -65,7 +64,7 @@ function App() {
 
   };
 
-  // Verify Contract Signature
+  // Verify contract signature
   const verifyContract = async () => {
 
     const res = await fetch(`${backendURL}/api/verify-contract`, {
@@ -86,6 +85,26 @@ function App() {
       setVerificationResult("✅ Signature Valid");
     } else {
       setVerificationResult("❌ Signature Invalid");
+    }
+
+  };
+
+  // Tamper blockchain (demo)
+  const tamperBlockchain = () => {
+
+    if (blocks.length > 1) {
+
+      const tampered = [...blocks];
+      tampered[1].data = "HACKED DATA";
+
+      setBlocks(tampered);
+
+      alert("Block tampered! Now check blockchain integrity.");
+
+    } else {
+
+      alert("Need at least 2 blocks to tamper.");
+
     }
 
   };
@@ -121,7 +140,7 @@ function App() {
         onChange={(e) => setMessage(e.target.value)}
       />
 
-      <br />
+      <br /><br />
 
       <button onClick={createRequest}>
         Create Request
@@ -133,6 +152,10 @@ function App() {
 
       <button onClick={verifyChain}>
         Check Blockchain Integrity
+      </button>
+
+      <button onClick={tamperBlockchain}>
+        Tamper Blockchain
       </button>
 
       <p>{chainStatus}</p>
@@ -159,7 +182,7 @@ function App() {
         onChange={(e) => setPublicKey(e.target.value)}
       />
 
-      <br />
+      <br /><br />
 
       <button onClick={verifyContract}>
         Verify Signature
@@ -172,6 +195,7 @@ function App() {
       <h2>Blockchain Explorer</h2>
 
       {blocks.map((block, index) => (
+
         <div key={index} className="block">
 
           <h3>Block #{index}</h3>
@@ -183,10 +207,12 @@ function App() {
           <p><b>Hash:</b> {block.hash}</p>
 
         </div>
+
       ))}
 
     </div>
   );
+
 }
 
 export default App;
