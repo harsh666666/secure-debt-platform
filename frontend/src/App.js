@@ -17,6 +17,7 @@ function App() {
   const [publicKey, setPublicKey] = useState("");
 
   const [blockchain, setBlockchain] = useState([]);
+  const [ledger, setLedger] = useState([]);
 
   // Create debt request
   const createRequest = async () => {
@@ -41,7 +42,7 @@ function App() {
 
     setSignature(res.data.signature);
 
-    alert("Contract signed and added to blockchain");
+    alert("Contract signed and stored in blockchain");
   };
 
   // Verify signature
@@ -56,7 +57,7 @@ function App() {
     alert("Signature valid: " + res.data.valid);
   };
 
-  // Get blockchain
+  // View blockchain
   const viewBlockchain = async () => {
 
     const res = await axios.get(`${backendURL}/api/blockchain`);
@@ -64,7 +65,7 @@ function App() {
     setBlockchain(res.data);
   };
 
-  // Verify blockchain
+  // Verify blockchain integrity
   const verifyChain = async () => {
 
     const res = await axios.get(`${backendURL}/api/verify-chain`);
@@ -72,12 +73,20 @@ function App() {
     alert("Blockchain valid: " + res.data.valid);
   };
 
-  // 🚨 Tamper demo
+  // Tamper blockchain demo
   const tamperBlockchain = async () => {
 
     const res = await axios.get(`${backendURL}/api/tamper`);
 
     alert(res.data.message);
+  };
+
+  // View debt ledger
+  const viewLedger = async () => {
+
+    const res = await axios.get(`${backendURL}/api/ledger`);
+
+    setLedger(res.data);
   };
 
   return (
@@ -88,12 +97,31 @@ function App() {
 
       <h2>Create Debt Request</h2>
 
-      <input placeholder="From" onChange={e => setFrom(e.target.value)} />
-      <input placeholder="To" onChange={e => setTo(e.target.value)} />
-      <input placeholder="Amount" onChange={e => setAmount(e.target.value)} />
-      <input placeholder="Message" onChange={e => setMessage(e.target.value)} />
+      <input
+        placeholder="From"
+        onChange={e => setFrom(e.target.value)}
+      />
 
-      <button onClick={createRequest}>Create Request</button>
+      <input
+        placeholder="To"
+        onChange={e => setTo(e.target.value)}
+      />
+
+      <input
+        placeholder="Amount"
+        onChange={e => setAmount(e.target.value)}
+      />
+
+      <input
+        placeholder="Message"
+        onChange={e => setMessage(e.target.value)}
+      />
+
+      <br /><br />
+
+      <button onClick={createRequest}>
+        Create Request
+      </button>
 
       <h2>Sign Contract</h2>
 
@@ -107,7 +135,11 @@ function App() {
         onChange={e => setPrivateKey(e.target.value)}
       />
 
-      <button onClick={signContract}>Sign Contract</button>
+      <br /><br />
+
+      <button onClick={signContract}>
+        Sign Contract
+      </button>
 
       <h2>Verify Contract Signature</h2>
 
@@ -122,13 +154,29 @@ function App() {
         onChange={e => setSignature(e.target.value)}
       />
 
-      <button onClick={verifySignature}>Verify Signature</button>
+      <br /><br />
+
+      <button onClick={verifySignature}>
+        Verify Signature
+      </button>
 
       <h2>Blockchain Controls</h2>
 
-      <button onClick={viewBlockchain}>View Blockchain</button>
-      <button onClick={verifyChain}>Check Blockchain Integrity</button>
-      <button onClick={tamperBlockchain}>Tamper Blockchain (Attack Demo)</button>
+      <button onClick={viewBlockchain}>
+        View Blockchain
+      </button>
+
+      <button onClick={verifyChain}>
+        Check Blockchain Integrity
+      </button>
+
+      <button onClick={tamperBlockchain}>
+        Tamper Blockchain (Attack Demo)
+      </button>
+
+      <button onClick={viewLedger}>
+        View Debt Ledger
+      </button>
 
       <h2>Blockchain Explorer</h2>
 
@@ -141,6 +189,23 @@ function App() {
           <p><b>Data:</b> {JSON.stringify(block.data)}</p>
           <p><b>Hash:</b> {block.hash}</p>
           <p><b>Previous Hash:</b> {block.previousHash}</p>
+
+          <hr />
+
+        </div>
+
+      ))}
+
+      <h2>Debt Transaction Ledger</h2>
+
+      {ledger.map((item, index) => (
+
+        <div key={index} className="block">
+
+          <p><b>Contract:</b> {item.contractData}</p>
+          <p><b>Signature:</b> {item.signature}</p>
+
+          <hr />
 
         </div>
 

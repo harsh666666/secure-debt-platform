@@ -131,6 +131,16 @@ app.get("/api/tamper", (req, res) => {
     });
 
 });
+// Get ledger of signed contracts
+app.get("/api/ledger", (req, res) => {
+
+    const ledger = debtChain.chain
+        .slice(1)
+        .map(block => block.data);
+
+    res.json(ledger);
+
+});
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
