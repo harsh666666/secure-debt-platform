@@ -1,23 +1,22 @@
 const express = require("express");
 const cors = require("cors");
 
-// Import crypto functions
-const { generateKeys, signMessage, verifySignature } = require("./crypto");
+const { generateKeys, signData, verifySignature } = require("./crypto");
+const Blockchain = require("./blockchain");
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
 
-// Test route
-app.get("/", (req, res) => {
-    res.send("Secure Debt Platform Backend Running");
-});
+const PORT = 5000;
 
+// Blockchain instance
+const debtChain = new Blockchain();
 
-// ===============================
+// Temporary storage for requests
+let requests = [];
+
 // Generate RSA Keys
-// ===============================
 app.get("/api/generate-keys", (req, res) => {
 
     const keys = generateKeys();
@@ -30,57 +29,99 @@ app.get("/api/generate-keys", (req, res) => {
 
 });
 
+// Create debt request
+app.post("/api/request", (req, res) => {
 
-// ===============================
-// Sign Message
-// ===============================
-app.post("/api/sign", (req, res) => {
+    const request = req.body;
 
-    const { message, privateKey } = req.body;
-
-    if (!message || !privateKey) {
-        return res.status(400).json({
-            error: "Message and privateKey required"
-        });
-    }
-
-    const signature = signMessage(message, privateKey);
+    requests.push(request);
 
     res.json({
-        message: "Message signed successfully",
-        signature: signature
+        message: "Request stored successfully",
+        data: request
     });
 
 });
 
+// Get all requests
+app.get("/api/requests", (req, res) => {
+    res.json(requests);
+});
 
-// ===============================
-// Verify Signature
-// ===============================
-app.post("/api/verify-signature", (req, res) => {
+// Sign contract
+app.post("/api/sign-contract", (req, res) => {
 
-    const { message, signature, publicKey } = req.body;
+    const { contractData, privateKey } = req.body;
 
-    if (!message || !signature || !publicKey) {
-        return res.status(400).json({
-            error: "message, signature and publicKey required"
+    try {
+
+        const signature = signData(contractData, privateKey);
+
+        // Store signed contract in blockchain
+        debtChain.addBlock({
+            contractData,
+            signature
         });
+
+        res.json({
+            message: "Contract signed successfully",
+            contractData,
+            signature
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: "Signing failed",
+            error: error.message
+        });
+
     }
 
-    const valid = verifySignature(message, signature, publicKey);
+});
+
+// Verify contract signature
+app.post("/api/verify-contract", (req, res) => {
+
+    const { contractData, signature, publicKey } = req.body;
+
+    try {
+
+        const valid = verifySignature(contractData, signature, publicKey);
+
+        res.json({
+            message: "Verification complete",
+            valid
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: "Verification failed",
+            error: error.message
+        });
+
+    }
+
+});
+
+// Get full blockchain
+app.get("/api/blockchain", (req, res) => {
+
+    res.json(debtChain.chain);
+
+});
+
+// Verify blockchain integrity
+app.get("/api/verify-chain", (req, res) => {
 
     res.json({
-        valid: valid
+        valid: debtChain.isChainValid()
     });
 
 });
 
-
-// ===============================
-// Start Server
-// ===============================
-const PORT = 5000;
-
+// Start server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });

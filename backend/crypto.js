@@ -7,27 +7,36 @@ function generateKeys() {
     const publicKey = forge.pki.publicKeyToPem(keypair.publicKey);
     const privateKey = forge.pki.privateKeyToPem(keypair.privateKey);
 
-    return { publicKey, privateKey };
+    return {
+        publicKey,
+        privateKey
+    };
 }
 
-// Sign message
-function signMessage(message, privateKeyPem) {
+// Sign data using private key
+function signData(data, privateKeyPem) {
+
+    // Fix formatting issues from JSON requests
+    privateKeyPem = privateKeyPem
+        .replace(/\\n/g, "\n")
+        .replace(/\r/g, "")
+        .trim();
+
     const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
 
     const md = forge.md.sha256.create();
-    md.update(message, "utf8");
+    md.update(data, "utf8");
 
     const signature = privateKey.sign(md);
 
     return forge.util.encode64(signature);
 }
-
-// Verify signature
-function verifySignature(message, signature64, publicKeyPem) {
+// Verify signature using public key
+function verifySignature(data, signature64, publicKeyPem) {
     const publicKey = forge.pki.publicKeyFromPem(publicKeyPem);
 
     const md = forge.md.sha256.create();
-    md.update(message, "utf8");
+    md.update(data, "utf8");
 
     const signature = forge.util.decode64(signature64);
 
@@ -36,6 +45,6 @@ function verifySignature(message, signature64, publicKeyPem) {
 
 module.exports = {
     generateKeys,
-    signMessage,
+    signData,
     verifySignature
 };
