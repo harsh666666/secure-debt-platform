@@ -22,7 +22,7 @@ import "./App.css";
   // Blockchain and Ledger
   const [blockchain, setBlockchain] = useState([]);
   const [ledger, setLedger] = useState([]);
-  const [integrity, setIntegrity] = useState(null);
+  
 
   // Generate RSA Keys
   const generateKeys = async () => {
